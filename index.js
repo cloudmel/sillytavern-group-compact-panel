@@ -106,23 +106,24 @@ function renderPanel() {
     const members = groupId ? getGroupMembers(groupId).filter(Boolean) : [];
     const group = groupId ? context.groups.find((item) => item.id === groupId) : null;
     const disabledMembers = Array.isArray(group?.disabled_members) ? group.disabled_members : [];
+    const queueStateByChid = buildQueueStateMap();
 
     list.replaceChildren();
     root.classList.toggle('group-compact-panel--empty', members.length === 0);
 
     for (const member of members) {
-        list.appendChild(createMemberItem(member, context, disabledMembers.includes(member.avatar)));
+        list.appendChild(createMemberItem(member, context, disabledMembers.includes(member.avatar), queueStateByChid));
     }
 }
 
-function createMemberItem(member, context, isDisabled) {
+function createMemberItem(member, context, isDisabled, queueStateByChid) {
     const item = document.createElement('div');
-    item.className = 'group_member group-compact-panel__item';
+    item.className = 'group-compact-panel__item';
     item.dataset.id = member.avatar;
     const chid = String(context.characters.indexOf(member));
     item.dataset.chid = chid;
     item.classList.toggle('disabled', isDisabled);
-    syncQueueState(item, member, context);
+    syncQueueState(item, member, context, queueStateByChid);
 
     const avatarButton = document.createElement('button');
     avatarButton.type = 'button';
@@ -345,18 +346,18 @@ function clampPanelPosition(root, left, top) {
     };
 }
 
-function syncQueueState(item, member, context) {
+function syncQueueState(item, member, context, queueStateByChid) {
     const standardMember = findStandardGroupMember(member, context);
 
     if (!(standardMember instanceof HTMLElement)) {
         return;
     }
 
+    const queueState = queueStateByChid.get(item.dataset.chid ?? '');
     item.classList.toggle('is_active', standardMember.classList.contains('is_active'));
     item.classList.toggle('is_queued', standardMember.classList.contains('is_queued'));
 
-    const queuePosition = standardMember.querySelector('.queue_position')?.textContent?.trim();
-    const queueValue = Number(queuePosition);
+    const queueValue = queueState?.queuePosition;
 
     if (Number.isInteger(queueValue) && queueValue > 0) {
         item.dataset.queuePosition = String(queueValue);
@@ -365,6 +366,77 @@ function syncQueueState(item, member, context) {
         delete item.dataset.queuePosition;
         item.style.removeProperty('--group-compact-panel-queue-hue');
     }
+}
+
+function buildQueueStateMap() {
+    const standardMembers = Array.from(document.querySelectorAll('#rm_group_members .group_member'))
+        .filter((element) => element instanceof HTMLElement);
+    const queueStateByChid = new Map();
+    const activeMembers = [];
+    const queuedMembers = [];
+
+    for (const standardMember of standardMembers) {
+        const chid = standardMember.dataset.chid;
+
+        if (!chid) {
+            continue;
+        }
+
+        const parsedQueuePosition = parseQueuePosition(standardMember);
+
+        if (standardMember.classList.contains('is_active')) {
+            activeMembers.push({ chid, parsedQueuePosition });
+            continue;
+        }
+
+        if (standardMember.classList.contains('is_queued')) {
+            queuedMembers.push({ chid, parsedQueuePosition });
+        }
+    }
+
+    const resolvedActiveMembers = resolveQueuePositions(activeMembers, 1);
+    const resolvedQueuedMembers = resolveQueuePositions(queuedMembers, 2);
+
+    for (const member of [...resolvedActiveMembers, ...resolvedQueuedMembers]) {
+        queueStateByChid.set(member.chid, { queuePosition: member.queuePosition });
+    }
+
+    return queueStateByChid;
+}
+
+function parseQueuePosition(standardMember) {
+    const queuePositionText = standardMember.querySelector('.queue_position')?.textContent?.trim() ?? '';
+    const queuePositionMatch = queuePositionText.match(/\d+/);
+    const queuePosition = Number(queuePositionMatch?.[0]);
+
+    return Number.isInteger(queuePosition) && queuePosition > 0 ? queuePosition : null;
+}
+
+function resolveQueuePositions(members, startPosition) {
+    const usedPositions = new Set();
+    const resolvedMembers = [];
+    let nextPosition = startPosition;
+
+    for (const member of members) {
+        const queuePosition = member.parsedQueuePosition;
+
+        if (Number.isInteger(queuePosition) && !usedPositions.has(queuePosition)) {
+            usedPositions.add(queuePosition);
+            resolvedMembers.push({ chid: member.chid, queuePosition });
+            nextPosition = Math.max(nextPosition, queuePosition + 1);
+            continue;
+        }
+
+        while (usedPositions.has(nextPosition)) {
+            nextPosition += 1;
+        }
+
+        usedPositions.add(nextPosition);
+        resolvedMembers.push({ chid: member.chid, queuePosition: nextPosition });
+        nextPosition += 1;
+    }
+
+    return resolvedMembers;
 }
 
 function getQueueHue(queuePosition) {
