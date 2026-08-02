@@ -49,3 +49,9 @@ The panel can be repositioned by dragging the small handle at the top-left.
 - Queue colors only appear when the standard group queue is available and being shown by SillyTavern.
 - The panel is hidden when no group is selected or when the current group has no members.
 - The compact panel is intentionally minimal and depends on the standard group member panel for the underlying actions.
+
+## Acknowledgements
+
+This extension was developed with the assistance of OpenAI Codex.
+
+The project idea, UI design, feature planning, testing, and iterative refinement were created by the repository author.
