@@ -18,7 +18,7 @@ It mirrors the standard group member actions in a smaller floating UI, so you ca
 
 ## Version
 
-Current extension version: `1.0.0`
+Current extension version: `1.0.1`
 
 The extension version is also stored in [manifest.json](./manifest.json).
 
