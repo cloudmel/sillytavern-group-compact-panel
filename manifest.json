@@ -5,9 +5,9 @@
     "optional": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "OpenAI",
+    "author": "cloudmel",
     "version": "1.0.0",
-    "homePage": "https://github.com/SillyTavern/SillyTavern",
+    "homePage": "https://github.com/cloudmel/sillytavern-group-compact-panel",
     "hooks": {
         "activate": "init"
     }

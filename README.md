@@ -29,6 +29,14 @@ The extension version is also stored in [manifest.json](./manifest.json).
 - `manifest.json`: extension metadata and activation hook
 - `README.md`: extension overview and usage notes
 
+## Installation
+
+1. Open SillyTavern and go to **Extensions**.
+2. Click **Install Extension**.
+3. Enter the repository URL:
+   [https://github.com/cloudmel/sillytavern-group-compact-panel](https://github.com/cloudmel/sillytavern-group-compact-panel)
+4. Click **Install**.
+
 ## How It Works
 
 The compact panel proxies actions from the standard `#rm_group_members` list instead of reimplementing them.
